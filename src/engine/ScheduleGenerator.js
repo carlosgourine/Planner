@@ -31,7 +31,8 @@ export const generateRecurringSessions = (scheduleData, currentYear = 2026) => {
         date: formattedDate,
         startTime: scheduleData.startTime,
         endTime: scheduleData.endTime,
-        status: 'SCHEDULED' // Default status before you miss it
+        status: 'SCHEDULED', // Default status before you miss it
+        color: scheduleData.color
       });
     }
     
