@@ -44,6 +44,10 @@ const parseSingleCommand = (text) => {
   const deleteMatch = cleanText.match(deleteRegex);
   if (deleteMatch) return { action: "DELETE_COURSE", course: deleteMatch[1] };
 
+  // 6. DETAILS Command
+  const detailsRegex = /^DETAILS$/i;
+  if (detailsRegex.test(cleanText)) return { action: "SHOW_DETAILS" };
+
   return { status: "ERROR", message: `Command not recognized: ${cleanText}` };
 };
 

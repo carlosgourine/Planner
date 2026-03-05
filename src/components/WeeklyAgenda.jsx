@@ -99,7 +99,7 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
             ))}
           </div>
 
-          <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+          <div className="calendar-grid" style={{ flex: 1, position: 'relative' }}>
 
             {isCurrentWeek && currentDec >= START_HOUR && currentDec <= 20 && (
               <div style={{ position: 'absolute', top: `${timeLineTop + 50}px`, left: 0, right: 0, height: '2px', backgroundColor: '#b020a2', zIndex: 5, pointerEvents: 'none' }}>

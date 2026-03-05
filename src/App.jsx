@@ -7,31 +7,69 @@ import CourseOverview from './components/CourseOverview';
 import WeeklyAgenda from './components/WeeklyAgenda';
 import { generateRecurringSessions } from './engine/ScheduleGenerator';
 import { parseCommand } from './engine/Parser';
+import { supabase } from './supabaseClient';
 
 export default function App() {
   const [masterSchedule, setMasterSchedule] = useState([]);
   const [activeTab, setActiveTab] = useState('WEEK');
   const [resetKey, setResetKey] = useState(0);
   const [selectedSession, setSelectedSession] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+
+  const fetchSchedule = async () => {
+    const { data, error } = await supabase
+      .from('master_schedule')
+      .select('*');
+
+    if (error) {
+      console.error("Error fetching from cloud:", error);
+    } else {
+      setMasterSchedule(data || []);
+    }
+  };
 
   useEffect(() => {
-    const savedData = localStorage.getItem('kuLeuvenSchedule');
-    if (savedData) {
-      setMasterSchedule(JSON.parse(savedData));
-    }
+    fetchSchedule();
   }, []);
 
   useEffect(() => {
-    if (masterSchedule.length > 0) {
-      localStorage.setItem('kuLeuvenSchedule', JSON.stringify(masterSchedule));
-    }
+    if (masterSchedule.length === 0) return;
+
+    const saveToCloud = async () => {
+      const cleanData = masterSchedule.map(item => ({
+        id: item.id,
+        course: item.course,
+        type: item.type,
+        date: item.date,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        color: item.color || '#3b82f6',
+        status: item.status || 'ACTIVE'
+      }));
+
+      const { error } = await supabase
+        .from('master_schedule')
+        .upsert(cleanData);
+
+      if (error) {
+        console.error("Supabase rejected the save:", error);
+        alert("Error saving! Press F12 to see why.");
+      } else {
+        console.log("Successfully synced to cloud!");
+      }
+    };
+
+    saveToCloud();
   }, [masterSchedule]);
 
   const handleCommandResult = (parsedCommands) => {
     let updatedSchedule = [...masterSchedule];
 
     parsedCommands.forEach(parsedData => {
-      if (parsedData.action === "CREATE_SCHEDULE") {
+      if (parsedData.action === "SHOW_DETAILS") {
+        setShowDetailsModal(true);
+      }
+      else if (parsedData.action === "CREATE_SCHEDULE") {
         const newSessions = generateRecurringSessions(parsedData);
         updatedSchedule = [...updatedSchedule, ...newSessions];
       }
@@ -111,6 +149,79 @@ export default function App() {
               style={{ marginTop: '20px', padding: '12px', width: '100%', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1em' }}
             >
               Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* THE DETAILS EXPORT MODAL */}
+      {showDetailsModal && (
+        <div
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          onClick={() => setShowDetailsModal(false)}
+        >
+          <div
+            style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', minWidth: '600px', maxWidth: '80%', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 style={{ margin: '0 0 10px 0', borderBottom: '4px solid #3b82f6', paddingBottom: '10px', color: '#333' }}>
+              System Details and Backup
+            </h2>
+            <p style={{ color: '#555', marginBottom: '15px' }}>
+              Here is your entire semester, reverse-engineered into the Tracker Command Language. Copy this text to back it up.
+            </p>
+
+            <textarea
+              readOnly
+              value={(() => {
+                const courses = {};
+                const modifiers = [];
+
+                masterSchedule.forEach(session => {
+                  const key = `${session.course}|${session.type}|${session.startTime}|${session.endTime}|${session.color}`;
+                  if (!courses[key]) {
+                    const [dd, mm] = session.date.split('/');
+                    const dateObj = new Date(2026, parseInt(mm) - 1, parseInt(dd));
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    courses[key] = {
+                      course: session.course,
+                      type: session.type,
+                      dayOfWeek: days[dateObj.getDay()],
+                      startTime: session.startTime,
+                      endTime: session.endTime,
+                      color: session.color,
+                      dates: []
+                    };
+                  }
+                  courses[key].dates.push(session.date);
+
+                  if (session.status === 'MISSED') modifiers.push(`MISSED "${session.course}" ${session.type} ON ${session.date}`);
+                  if (session.status === 'CAUGHT_UP') modifiers.push(`CAUGHT UP "${session.course}" ${session.type} ON ${session.date}`);
+                  if (session.status === 'CANCELLED') modifiers.push(`CANCEL "${session.course}" ${session.type} ON ${session.date}`);
+                });
+
+                let exportString = '';
+
+                Object.values(courses).forEach(c => {
+                  const sortedDates = c.dates.sort((a, b) => {
+                    const [d1, m1] = a.split('/');
+                    const [d2, m2] = b.split('/');
+                    return new Date(2026, m1 - 1, d1) - new Date(2026, m2 - 1, d2);
+                  });
+                  exportString += `SCHEDULE "${c.course}" ${c.type} EVERY ${c.dayOfWeek} ${c.startTime}-${c.endTime} STARTING ${sortedDates[0]} TILL ${sortedDates[sortedDates.length - 1]} COLOR ${c.color};\n`;
+                });
+
+                modifiers.forEach(mod => (exportString += `${mod};\n`));
+                return exportString.trim();
+              })()}
+              style={{ width: '100%', height: '350px', padding: '15px', borderRadius: '8px', border: '1px solid #ddd', fontFamily: 'monospace', fontSize: '0.9em', whiteSpace: 'pre-wrap', backgroundColor: '#f9f9f9', resize: 'vertical' }}
+            />
+
+            <button
+              onClick={() => setShowDetailsModal(false)}
+              style={{ marginTop: '20px', padding: '12px', width: '100%', backgroundColor: '#333', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1em' }}
+            >
+              Close Details
             </button>
           </div>
         </div>
