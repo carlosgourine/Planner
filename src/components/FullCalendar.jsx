@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { getDaysInMonth, getFirstDayOfMonth, formatDateForMatch } from '../utils/DateEngine';
 
-export default function FullCalendar({ masterSchedule }) {
+export default function FullCalendar({ masterSchedule, onSessionClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const today = new Date();
@@ -54,6 +54,8 @@ export default function FullCalendar({ masterSchedule }) {
           {classesToday.map(cls => (
             <div
               key={cls.id}
+              onClick={() => onSessionClick(cls)}
+              className="hide-scrollbar"
               style={{
                 backgroundColor: getClassColor(cls),
                 color: 'white',
@@ -62,10 +64,11 @@ export default function FullCalendar({ masterSchedule }) {
                 borderRadius: '4px',
                 whiteSpace: 'nowrap',
                 overflowX: 'auto',
-                overflowY: 'hidden'
+                overflowY: 'hidden',
+                cursor: 'pointer'
               }}
             >
-              <strong>{cls.startTime}</strong> {cls.course}
+              <strong>{cls.startTime}</strong> {cls.status === 'MISSED' && '🟠 '}{cls.course}
             </div>
           ))}
         </div>
@@ -81,7 +84,7 @@ export default function FullCalendar({ masterSchedule }) {
         <button onClick={nextMonth} style={{ padding: '8px 16px', cursor: 'pointer', border: 'none', backgroundColor: '#eee', borderRadius: '4px' }}>Next &gt;</button>
       </div>
 
-      <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #ddd' }}>
+      <div className="hide-scrollbar" style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #ddd' }}>
         <div style={{ minWidth: '900px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontWeight: 'bold', padding: '10px 0', backgroundColor: '#f0f2f5', color: '#666', borderBottom: '1px solid #ddd' }}>
             <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>

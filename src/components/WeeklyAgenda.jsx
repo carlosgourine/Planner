@@ -1,7 +1,7 @@
 // components/WeeklyAgenda.jsx
 import React, { useState, useEffect } from 'react';
 
-export default function WeeklyAgenda({ masterSchedule }) {
+export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [now, setNow] = useState(new Date());
 
@@ -82,7 +82,7 @@ export default function WeeklyAgenda({ masterSchedule }) {
         <button onClick={nextWeek} style={{ padding: '8px 16px', cursor: 'pointer' }}>Next Week &gt;</button>
       </div>
 
-      <div style={{ overflowX: 'auto', border: '1px solid #ddd', backgroundColor: '#fafafa', position: 'relative' }}>
+      <div className="hide-scrollbar" style={{ overflowX: 'auto', border: '1px solid #ddd', backgroundColor: '#fafafa', position: 'relative' }}>
 
         <div style={{ display: 'flex', minWidth: '900px' }}>
 
@@ -130,6 +130,7 @@ export default function WeeklyAgenda({ masterSchedule }) {
                       return (
                         <div
                           key={session.id}
+                          onClick={() => onSessionClick(session)}
                           style={{
                             position: 'absolute',
                             top: `${topPosition}px`,
@@ -147,8 +148,11 @@ export default function WeeklyAgenda({ masterSchedule }) {
                             zIndex: 2,
                             border: session.status === 'MISSED' ? '2px solid darkred' : '1px solid rgba(0,0,0,0.1)'
                           }}
+                          className="hide-scrollbar"
                         >
-                          <strong style={{ display: 'block', marginBottom: '4px' }}>{session.course}</strong>
+                          <strong style={{ display: 'block', marginBottom: '4px' }}>
+                            {session.status === 'MISSED' && '🟠 '}{session.course}
+                          </strong>
                           <span style={{ opacity: 0.9 }}>{session.type} <br /> ({session.startTime})</span>
                         </div>
                       );
@@ -163,3 +167,4 @@ export default function WeeklyAgenda({ masterSchedule }) {
     </div>
   );
 }
+
