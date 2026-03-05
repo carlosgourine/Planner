@@ -73,11 +73,14 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#f0f2f5', minHeight: '100vh', paddingBottom: '100px' }}>
+
+      {/* THIS HIDES THE UGLY SCROLLBARS */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
+      {/* THIS IS THE INTERACTIVE POP-UP MODAL */}
       {selectedSession && (
         <div
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
@@ -85,23 +88,10 @@ export default function App() {
         >
           <div
             style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', minWidth: '320px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <h2 style={{ margin: '0 0 15px 0', borderBottom: `4px solid ${selectedSession.color || '#3b82f6'}`, paddingBottom: '10px', color: '#333' }}>
-              {selectedSession.status === 'MISSED' && (
-                <span
-                  style={{
-                    display: 'inline-block',
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    backgroundColor: '#f59e0b',
-                    marginRight: '8px',
-                    verticalAlign: 'middle'
-                  }}
-                ></span>
-              )}
-              {selectedSession.course}
+              {selectedSession.status === 'MISSED' ? '🟠 ' : ''}{selectedSession.course}
             </h2>
             <div style={{ fontSize: '1.1em', color: '#555', lineHeight: '1.6' }}>
               <p style={{ margin: '5px 0' }}><strong>Type:</strong> {selectedSession.type}</p>
@@ -126,6 +116,7 @@ export default function App() {
         </div>
       )}
 
+      {/* THE NEW TITLE */}
       <div style={{ backgroundColor: '#1a1a1a', color: 'white', padding: '20px', textAlign: 'center', marginBottom: '20px' }}>
         <h1 style={{ margin: 0 }}>Student Tracker</h1>
       </div>
@@ -148,7 +139,11 @@ export default function App() {
       {activeTab === 'OVERVIEW' && <CourseOverview masterSchedule={masterSchedule} onToggleStatus={handleToggleStatus} />}
 
       <ToDoList masterSchedule={masterSchedule} onMarkCaughtUp={(id) => handleToggleStatus(id, 'CAUGHT_UP')} onDeleteTask={(id) => handleToggleStatus(id, 'DELETED')} />
-      <CommandPrompt onDataExtracted={handleCommandResult} />
+
+      <div style={{ position: 'relative', zIndex: 1000 }}>
+        <CommandPrompt onDataExtracted={handleCommandResult} />
+      </div>
+
     </div>
   );
 }

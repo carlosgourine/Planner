@@ -4,7 +4,6 @@ import { getDaysInMonth, getFirstDayOfMonth, formatDateForMatch } from '../utils
 
 export default function FullCalendar({ masterSchedule, onSessionClick }) {
   const [currentDate, setCurrentDate] = useState(new Date());
-
   const today = new Date();
 
   const year = currentDate.getFullYear();
@@ -36,15 +35,7 @@ export default function FullCalendar({ masterSchedule, onSessionClick }) {
     return (
       <div
         key={dayNumber}
-        style={{
-          backgroundColor: isToday ? '#eff6ff' : '#ffffff',
-          border: isToday ? '3px solid #3b82f6' : '1px solid #ddd',
-          minHeight: '120px',
-          padding: '5px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        }}
+        style={{ backgroundColor: isToday ? '#eff6ff' : '#ffffff', border: isToday ? '3px solid #3b82f6' : '1px solid #ddd', minHeight: '120px', padding: '5px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
       >
         <div style={{ fontWeight: 'bold', color: isToday ? '#3b82f6' : '#555', marginBottom: '5px', textAlign: 'right' }}>
           {dayNumber}
@@ -54,19 +45,9 @@ export default function FullCalendar({ masterSchedule, onSessionClick }) {
           {classesToday.map(cls => (
             <div
               key={cls.id}
-              onClick={() => onSessionClick(cls)}
+              onClick={() => onSessionClick && onSessionClick(cls)}
               className="hide-scrollbar"
-              style={{
-                backgroundColor: getClassColor(cls),
-                color: 'white',
-                fontSize: '0.75em',
-                padding: '4px 6px',
-                borderRadius: '4px',
-                whiteSpace: 'nowrap',
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                cursor: 'pointer'
-              }}
+              style={{ backgroundColor: getClassColor(cls), color: 'white', fontSize: '0.75em', padding: '4px 6px', borderRadius: '4px', whiteSpace: 'nowrap', overflowX: 'auto', overflowY: 'hidden', cursor: 'pointer' }}
             >
               <strong>{cls.startTime}</strong> {cls.status === 'MISSED' && '🟠 '}{cls.course}
             </div>
@@ -77,15 +58,15 @@ export default function FullCalendar({ masterSchedule, onSessionClick }) {
   });
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', marginBottom: '100px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', backgroundColor: '#fff', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-        <button onClick={prevMonth} style={{ padding: '8px 16px', cursor: 'pointer', border: 'none', backgroundColor: '#eee', borderRadius: '4px' }}>&lt; Prev</button>
+        <button onClick={prevMonth} style={{ padding: '8px 16px', cursor: 'pointer', border: 'none', backgroundColor: '#eee', borderRadius: '4px' }}>◀ Prev</button>
         <h2 style={{ margin: 0 }}>{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2>
-        <button onClick={nextMonth} style={{ padding: '8px 16px', cursor: 'pointer', border: 'none', backgroundColor: '#eee', borderRadius: '4px' }}>Next &gt;</button>
+        <button onClick={nextMonth} style={{ padding: '8px 16px', cursor: 'pointer', border: 'none', backgroundColor: '#eee', borderRadius: '4px' }}>Next ▶</button>
       </div>
 
-      <div className="hide-scrollbar" style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #ddd' }}>
-        <div style={{ minWidth: '900px' }}>
+      <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid #ddd' }}>
+        <div style={{ minWidth: '750px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', textAlign: 'center', fontWeight: 'bold', padding: '10px 0', backgroundColor: '#f0f2f5', color: '#666', borderBottom: '1px solid #ddd' }}>
             <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
           </div>

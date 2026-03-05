@@ -42,13 +42,20 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
   };
 
   const calculateOverlaps = (sessions) => {
-    const sorted = [...sessions].sort((a, b) => timeToDecimal(a.startTime) - timeToDecimal(b.startTime));
     let columns = [];
+    let lastEventEnd = 0;
+    const sorted = [...sessions].sort((a, b) => timeToDecimal(a.startTime) - timeToDecimal(b.startTime));
+
     sorted.forEach(session => {
+      const start = timeToDecimal(session.startTime);
+      if (start >= lastEventEnd) {
+        columns.forEach(col => col.forEach(event => event.totalCols = columns.length));
+        columns = [];
+      }
       let placed = false;
       for (let i = 0; i < columns.length; i++) {
         const lastInCol = columns[i][columns[i].length - 1];
-        if (timeToDecimal(lastInCol.endTime) <= timeToDecimal(session.startTime)) {
+        if (timeToDecimal(lastInCol.endTime) <= start) {
           columns[i].push(session);
           session.colIndex = i;
           placed = true;
@@ -59,32 +66,29 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
         session.colIndex = columns.length;
         columns.push([session]);
       }
+      lastEventEnd = Math.max(lastEventEnd, timeToDecimal(session.endTime));
     });
 
-    sorted.forEach(session => {
-      session.totalCols = columns.length;
-    });
+    columns.forEach(col => col.forEach(event => event.totalCols = columns.length));
     return sorted;
   };
 
-  const hoursGrid = Array.from({ length: 13 }).map((_, i) => START_HOUR + i);
-
+  const hoursGrid = Array.from({ length: 14 }).map((_, i) => START_HOUR + i);
   const currentDec = now.getHours() + (now.getMinutes() / 60);
   const timeLineTop = (currentDec - START_HOUR) * PIXELS_PER_HOUR;
   const isCurrentWeek = weekDays.some(d => d.dateObj.toDateString() === now.toDateString());
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+    <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto', marginBottom: '100px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <button onClick={prevWeek} style={{ padding: '8px 16px', cursor: 'pointer' }}>&lt; Prev Week</button>
+        <button onClick={prevWeek} style={{ padding: '8px 16px', cursor: 'pointer', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>◀ Prev Week</button>
         <h2 style={{ margin: 0 }}>Week of {weekDays[0].matchString} - {weekDays[6].matchString}</h2>
-        <button onClick={nextWeek} style={{ padding: '8px 16px', cursor: 'pointer' }}>Next Week &gt;</button>
+        <button onClick={nextWeek} style={{ padding: '8px 16px', cursor: 'pointer', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#f9f9f9' }}>Next Week ▶</button>
       </div>
 
-      <div className="hide-scrollbar" style={{ overflowX: 'auto', border: '1px solid #ddd', backgroundColor: '#fafafa', position: 'relative' }}>
-
-        <div style={{ display: 'flex', minWidth: '900px' }}>
+      <div style={{ overflowX: 'auto', border: '1px solid #ddd', backgroundColor: '#fafafa', position: 'relative', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', minWidth: '750px' }}>
 
           <div style={{ width: '60px', borderRight: '1px solid #ddd', backgroundColor: '#fff', zIndex: 10 }}>
             <div style={{ height: '50px', borderBottom: '1px solid #ddd' }}></div>
@@ -98,7 +102,7 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
           <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
 
             {isCurrentWeek && currentDec >= START_HOUR && currentDec <= 20 && (
-              <div style={{ position: 'absolute', top: `${timeLineTop + 50}px`, left: 0, right: 0, height: '2px', backgroundColor: '#b020a2', zIndex: 5 }}>
+              <div style={{ position: 'absolute', top: `${timeLineTop + 50}px`, left: 0, right: 0, height: '2px', backgroundColor: '#b020a2', zIndex: 5, pointerEvents: 'none' }}>
                 <span style={{ position: 'absolute', left: '-45px', top: '-8px', fontSize: '10px', color: '#b020a2', backgroundColor: '#fff', padding: '0 2px' }}>
                   {now.getHours()}:{String(now.getMinutes()).padStart(2, '0')}
                 </span>
@@ -130,13 +134,16 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
                       return (
                         <div
                           key={session.id}
-                          onClick={() => onSessionClick(session)}
+                          onClick={() => onSessionClick && onSessionClick(session)}
+                          className="hide-scrollbar"
                           style={{
                             position: 'absolute',
                             top: `${topPosition}px`,
                             height: `${boxHeight}px`,
                             width: `calc(${widthPct}% - 4px)`,
-                            left: `calc(${leftPos}% + 2px)`,
+                            left: `${leftPos}%`,
+                            marginLeft: '2px',
+                            boxSizing: 'border-box',
                             backgroundColor: session.status === 'MISSED' ? '#ff4d4d' : (session.color || '#e2e8f0'),
                             color: '#fff',
                             padding: '6px',
@@ -144,11 +151,11 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
                             fontSize: '0.75em',
                             overflow: 'auto',
                             wordBreak: 'break-word',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                            zIndex: 2,
-                            border: session.status === 'MISSED' ? '2px solid darkred' : '1px solid rgba(0,0,0,0.1)'
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                            zIndex: 1,
+                            border: session.status === 'MISSED' ? '2px solid darkred' : '1px solid rgba(0,0,0,0.1)',
+                            cursor: 'pointer'
                           }}
-                          className="hide-scrollbar"
                         >
                           <strong style={{ display: 'block', marginBottom: '4px' }}>
                             {session.status === 'MISSED' && '🟠 '}{session.course}
@@ -167,4 +174,3 @@ export default function WeeklyAgenda({ masterSchedule, onSessionClick }) {
     </div>
   );
 }
-
